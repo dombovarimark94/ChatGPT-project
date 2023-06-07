@@ -22,7 +22,7 @@ namespace ChatGPT_project.Controllers
 
         public ChatGPTController()
         {
-            openAI = new OpenAIAPI("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");
+            openAI = new OpenAIAPI("API-key");
         }
 
         [EnableCors("AllowAllOrigins")]
