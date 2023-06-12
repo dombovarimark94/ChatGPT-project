@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using OpenAI_API;
 using OpenAI_API.Completions;
 using OpenAI_API.Models;
@@ -18,28 +19,32 @@ namespace ChatGPT_project.Controllers
     {
         private static List<string> conversationHistory = new List<string>();
         private readonly OpenAIAPI openAI;
-        private const int MaxConversationLength = 8; 
+        private const int MaxConversationLength = 8;
+        private readonly string apiKey;
 
-        public ChatGPTController()
+        public ChatGPTController(IConfiguration configuration)
         {
-            openAI = new OpenAIAPI("API-key");
+            apiKey = configuration.GetValue<string>("OpenAI:ApiKey");
+            openAI = new OpenAIAPI(apiKey);
         }
 
         [EnableCors("AllowAllOrigins")]
         [HttpGet]
         [Route("UseChatGPT")]
-        public async Task<IActionResult> UseChatGPT(string query)
+        public async Task<IActionResult> UseChatGPT(string query, [FromServices] IConfiguration configuration)
         {
-            
+            if (string.IsNullOrEmpty(apiKey))
+            {
+                return StatusCode((int)HttpStatusCode.InternalServerError, "API key not provided in the configuration file.");
+            }
+
             conversationHistory.Add(query);
 
-            
             if (conversationHistory.Count > MaxConversationLength)
             {
                 conversationHistory = conversationHistory.Skip(conversationHistory.Count - MaxConversationLength).ToList();
             }
 
-            
             CompletionRequest completionRequest = new CompletionRequest();
             completionRequest.Prompt = string.Join("\n", conversationHistory);
             completionRequest.Model = Model.DavinciText;
@@ -51,12 +56,10 @@ namespace ChatGPT_project.Controllers
             {
                 var completions = await openAI.Completions.CreateCompletionAsync(completionRequest);
 
-                
                 outputResult = completions.Completions.FirstOrDefault()?.Text;
             }
             catch (Exception ex)
             {
-
                 conversationHistory.RemoveAt(conversationHistory.Count - 1);
 
                 return StatusCode((int)HttpStatusCode.InternalServerError, $"An error occurred: {ex.Message}");
@@ -64,7 +67,6 @@ namespace ChatGPT_project.Controllers
 
             if (!string.IsNullOrEmpty(outputResult))
             {
-                
                 conversationHistory.Add(outputResult);
             }
 
