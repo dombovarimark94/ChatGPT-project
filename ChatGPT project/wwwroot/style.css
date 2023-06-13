@@ -56,14 +56,14 @@ body {
 .message.user p {
   background-color: #0084ff;
   color: white;
-  text-align: right;
+  text-align: justify;
   margin-left: 10px;
 }
 
 .message.bot p {
   background-color: #e4e6eb;
   color: #1c1e21;
-  text-align: left;
+  text-align: justify;
   margin-right: 10px;
 }
 
